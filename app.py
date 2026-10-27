@@ -12,12 +12,18 @@ st.title('🌫️ Air Quality Analysis & NO₂ Prediction')
 st.caption('PADV Activity 2 · UCI Air Quality dataset · Random Forest Regression')
 
 @st.cache_data
-def read_data(file_bytes, filename):
-    import io
-    f = io.BytesIO(file_bytes)
-    if filename.lower().endswith('.csv'):
-        return pd.read_csv(f, sep=None, engine='python')
-    return pd.read_excel(f)
+def read_data():
+    from pathlib import Path
+    for filename in ('AirQualityUCI.xlsx', 'AirQualityUCI.csv', 'air_quality.csv'):
+        path = Path(__file__).resolve().parent / filename
+        if path.is_file():
+            if path.suffix.lower() == '.csv':
+                # UCI CSV commonly uses semicolons and decimal commas.
+                if path.name == 'AirQualityUCI.csv':
+                    return pd.read_csv(path, sep=';', decimal=',').dropna(axis=1, how='all')
+                return pd.read_csv(path, sep=None, engine='python')
+            return pd.read_excel(path)
+    raise FileNotFoundError('Dataset missing. Add AirQualityUCI.xlsx to the same GitHub folder as app.py, then redeploy.')
 
 @st.cache_data
 def clean_data(df):
@@ -54,16 +60,12 @@ def train_model(data):
     imp = pd.DataFrame({'Feature':X.columns, 'Importance':model.named_steps['regressor'].feature_importances_}).sort_values('Importance', ascending=False)
     return model, X, metrics, comparison, imp, n
 
-uploaded = st.file_uploader('Upload AirQualityUCI.xlsx or equivalent CSV', type=['xlsx','xls','csv'])
-if uploaded is None:
-    st.info('Upload the AirQualityUCI.xlsx dataset to display analysis, evaluation and prediction. The dashboard will work on Streamlit Community Cloud.')
-    st.stop()
 try:
-    raw = read_data(uploaded.getvalue(), uploaded.name)
+    raw = read_data()
     data = clean_data(raw)
     model, X, metrics, comparison, importance, split = train_model(data)
 except Exception as exc:
-    st.error(f'Unable to process this dataset: {exc}')
+    st.error(f'Unable to load or process the bundled dataset: {exc}')
     st.stop()
 
 c1,c2,c3,c4 = st.columns(4)
@@ -96,7 +98,7 @@ with performance:
     a.metric('MAE', f"{metrics['MAE']:.4f}")
     b.metric('RMSE', f"{metrics['RMSE']:.4f}")
     c.metric('R² score', f"{metrics['R²']:.4f}")
-    st.caption('Chronological split: first 80% for training, last 20% for testing. Results are computed from the uploaded file.')
+    st.caption('Chronological split: first 80% for training, last 20% for testing. Results are computed from the dataset bundled with the app.')
     st.plotly_chart(px.line(comparison, x='DateTime', y=['Actual NO₂','Predicted NO₂'], title='Actual vs predicted NO₂ on test data'), use_container_width=True)
     st.plotly_chart(px.bar(importance.head(15).sort_values('Importance'), x='Importance', y='Feature', orientation='h', title='Top feature importances'), use_container_width=True)
     st.download_button('Download prediction results', comparison.to_csv(index=False), 'no2_prediction_results.csv', 'text/csv')
