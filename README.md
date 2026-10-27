@@ -5,8 +5,7 @@
 This project focuses on analyzing air quality data and predicting Nitrogen Dioxide (NO2) concentrations using machine learning. It includes data preprocessing, exploratory data analysis, interactive visualizations, and predictive modeling.
 
 ## Live Interactive Dashboard
-
-**[Click Here to View the Live Streamlit Dashboard]([PASTE_YOUR_STREAMLIT_LINK_HERE](https://air-quality-analysis-and-prediction-using-machine-learning-qyd.streamlit.app/))**
+https://air-quality-analysis-and-prediction-using-machine-learning-qyd.streamlit.app/
 
 ## Dataset
 
